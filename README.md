@@ -32,6 +32,8 @@ npm run dev
 
 ## Подключение и публикация
 
+Для первого запуска: **[Пошаговое подключение Supabase с кодом для SQL Editor](docs/CONNECT-SUPABASE.md)**. Готовый объединённый SQL: [supabase/setup-sql-editor.sql](supabase/setup-sql-editor.sql).
+
 1. **[Supabase: база, Auth, RLS, функции, первый администратор](docs/SUPABASE.md)**.
 2. **[Cloudflare Pages: публикация из GitHub и переменные сборки](docs/CLOUDFLARE.md)**.
 3. **[Архитектура и модель безопасности](docs/SECURITY.md)**.

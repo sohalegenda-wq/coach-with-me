@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22.12.0" },
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
@@ -12,8 +14,15 @@
     "test:e2e": "playwright test",
     "test:db": "node scripts/test-db.mjs",
     "db:seed": "node scripts/generate-seed.mjs",
-    "check": "npm run test && npm run build"
+    "check": "npm run test && npm run build",
+    "db:bundle": "node scripts/build-sql-editor.mjs"
   },
-  "dependencies": { "@supabase/supabase-js": "2.118.0" },
-  "devDependencies": { "@playwright/test": "1.61.1", "vite": "8.3.5", "pg": "8.16.3" }
+  "dependencies": {
+    "@supabase/supabase-js": "2.118.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.61.1",
+    "vite": "8.3.5",
+    "pg": "8.16.3"
+  }
 }

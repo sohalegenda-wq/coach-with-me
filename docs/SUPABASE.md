@@ -17,9 +17,11 @@ VITE_SUPABASE_ANON_KEY=YOUR_PUBLIC_PUBLISHABLE_KEY
 
 **Через SQL Editor** (без CLI):
 
-1. Откройте `supabase/migrations/202610230001_academy.sql`, скопируйте весь файл в SQL Editor проекта и выполните.
-2. Выполните `supabase/migrations/202610230002_content.sql`.
+1. Откройте [setup-sql-editor.sql](../supabase/setup-sql-editor.sql), скопируйте весь файл в SQL Editor проекта и выполните один раз.
+2. Этот файл уже включает обе миграции. Отдельно запускать их не нужно. Если вы уже применили исходные миграции, объединённый файл не запускайте.
 3. Проверьте: 5 курсов, 19 уроков, 115 вопросов; у таблиц включён RLS, схема `private` не входит в Exposed schemas Data API.
+
+Подробные действия по кнопкам и настройкам сборки: [инструкция первого подключения](CONNECT-SUPABASE.md).
 
 **Или через CLI** (нужен Docker только для локальной разработки, не для `db push`):
 
