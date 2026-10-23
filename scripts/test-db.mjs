@@ -18,10 +18,54 @@ try{
  const roles=await client.query("select rolname from pg_roles where rolname in ('anon','authenticated')");
  for(const {rolname} of roles.rows)await client.query(`drop role ${rolname}`);
  await client.query(readFileSync(new URL('../tests/auth-shim.sql',import.meta.url),'utf8'));
- await client.query(readFileSync(new URL('../supabase/migrations/202610230001_academy.sql',import.meta.url),'utf8'));
- await client.query(readFileSync(new URL('../supabase/migrations/202610230002_content.sql',import.meta.url),'utf8'));
+ if(process.env.CWM_TEST_LEGACY==='1') {
+  await client.query(readFileSync(new URL('../tests/legacy-profiles.sql',import.meta.url),'utf8'));
+  const upgrade=readFileSync(new URL('../supabase/upgrade-legacy-profiles.sql',import.meta.url),'utf8');
+  const before=(await client.query('select * from public.profiles')).rows;
+  await test('ambiguous legacy Auth trigger aborts upgrade without modifying profiles',async()=>{
+   await client.query(`create function public.ambiguous_profile_trigger() returns trigger language plpgsql as $$ begin perform 1; insert into public.profiles(id,username) values(new.id,'ambiguous'); return new; end; $$;
+    create trigger ambiguous_profile after insert on auth.users for each row execute function public.ambiguous_profile_trigger();`);
+   await denied(()=>client.query(upgrade),/дополнительную логику/);
+   await client.query('rollback');
+   assert.deepEqual((await client.query('select * from public.profiles')).rows,before);
+   assert.equal((await client.query("select to_regclass('private.cwm_legacy_profiles_backup') as archive")).rows[0].archive,null);
+   await client.query('drop trigger ambiguous_profile on auth.users; drop function public.ambiguous_profile_trigger()');
+  });
+  await client.query(upgrade);
+  await test('legacy rows, names and timestamps preserved with a private original backup',async()=>{
+   assert.deepEqual((await client.query('select * from private.cwm_legacy_profiles_backup')).rows,before);
+   const p=(await client.query('select * from public.profiles where id=$1',[before[0].id])).rows[0];
+   for(const key of ['id','username','display_name','license','created_at'])assert.deepEqual(p[key],before[0][key]);
+   assert.equal(p.nickname,'Старый тренер');
+   const oldName=(await client.query("select username, nickname from public.profiles where id='10000000-0000-4000-8000-000000000006'")).rows[0];
+   assert.deepEqual(oldName,{username:'Old Coach/Тренер',nickname:'Имя из старой версии'});
+   assert.equal((await client.query("select username from public.profiles where id='10000000-0000-4000-8000-000000000005'")).rows[0].username,'legacy_2');
+   assert.equal((await client.query('select * from public.user_licenses')).rows.length,0);
+  });
+  await test('legacy public policies and column update grants are removed',async()=>{
+   await as(null);await denied(()=>client.query('select username from public.profiles'),/permission denied/);
+   await as(before[0].id);
+   assert.equal((await client.query('select * from public.profiles')).rows.length,1);
+   await denied(()=>client.query("update public.profiles set license='Pro'"),/permission denied/);
+   await denied(()=>client.query('select * from private.cwm_legacy_profiles_backup'),/permission denied/);
+   await rpc('profile',{nickname:'Обновлённый тренер',bio:'',club:'',avatar:'⚽'});
+   await client.query('reset role');
+  });
+  await test('legacy upgrade is one-time and repeated execution rolls back safely',async()=>{
+   await denied(()=>client.query(upgrade),/Структура profiles отличается/);await client.query('rollback');
+   assert.equal((await client.query('select count(*)::integer as n from public.courses')).rows[0].n,5);
+  });
+ } else {
+  await client.query(readFileSync(new URL('../supabase/migrations/202610230001_academy.sql',import.meta.url),'utf8'));
+  await client.query(readFileSync(new URL('../supabase/migrations/202610230002_content.sql',import.meta.url),'utf8'));
+ }
  console.log('Schema and content migrations applied successfully');
  for(const [id,username] of [[student,'student_one'],[other,'student_two'],[admin,'admin_coach']])await client.query('insert into auth.users values($1,$2,$3)',[id,username+'@example.test',JSON.stringify({username,nickname:username})]);
+ if(process.env.CWM_TEST_LEGACY==='1')await test('new signup uses one Auth trigger and never grants a legacy license',async()=>{
+  const p=(await client.query('select * from public.profiles where id=$1',[student])).rows[0];
+  assert.equal(p.nickname,'student_one');assert.equal(p.license,null);
+  await denied(()=>client.query('insert into auth.users values($1,$2,$3)',['10000000-0000-4000-8000-000000000099','invalid@example.test',JSON.stringify({username:'INVALID NAME',nickname:'Неверный'})]),/Имя пользователя/);
+ });
  await client.query("update public.app_roles set role='admin' where user_id=$1",[admin]);
  await test('anonymous can read curriculum, cannot read private profiles',async()=>{await as(null);assert.equal((await client.query('select count(*)::integer as n from public.lessons')).rows[0].n,19);await denied(()=>client.query('select * from public.profiles'),/permission denied/);});
  await as(student);

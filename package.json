@@ -15,7 +15,8 @@
     "test:db": "node scripts/test-db.mjs",
     "db:seed": "node scripts/generate-seed.mjs",
     "check": "npm run test && npm run build",
-    "db:bundle": "node scripts/build-sql-editor.mjs"
+    "db:bundle": "node scripts/build-sql-editor.mjs",
+    "db:legacy": "node scripts/build-legacy-upgrade.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.118.0"

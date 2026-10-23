@@ -25,7 +25,9 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: node scripts/build-sql-editor.mjs --check
+      - run: node scripts/build-legacy-upgrade.mjs --check
       - run: npm run test:db
+      - run: CWM_TEST_LEGACY=1 npm run test:db
       - run: DENO_DIR=/tmp/cwm-deno npm exec --yes --package=deno@2.9.6 -- deno test --allow-env --node-modules-dir=manual tests/edge.test.ts
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
