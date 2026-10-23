@@ -70,7 +70,7 @@ supabase/
   functions/academy-api/  защищённые изменения данных
   functions/coach/        подключаемый ИИ, лимит и fallback
   functions/_shared/      CORS и проверка JWT через Auth
-public/                   favicon, заголовки безопасности, SPA redirect
+public/                   favicon и заголовки безопасности
 scripts/                  генератор наполнения и тест базы
  tests/                   модульные, SQL и браузерные проверки
  docs/                    инструкции
